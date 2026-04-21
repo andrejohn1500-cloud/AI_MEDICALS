@@ -28,7 +28,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _idx = 0;
   final _screens = const [DiagnoseScreen(), HistoryScreen(), ProfileScreen(), EmergencyScreen()];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,6 +57,22 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
   final _ctrl = TextEditingController();
   String _result = '';
   bool _loading = false;
+  String? _selectedCategory;
+
+  static const _categories = [
+    {'label': 'Head & Brain',    'icon': '🧠'},
+    {'label': 'Eyes',            'icon': '👁️'},
+    {'label': 'Ears, Nose & Throat', 'icon': '👃'},
+    {'label': 'Chest & Heart',   'icon': '❤️'},
+    {'label': 'Stomach & Gut',   'icon': '🫃'},
+    {'label': 'Back & Spine',    'icon': '🦴'},
+    {'label': 'Skin',            'icon': '🩹'},
+    {'label': 'Arms & Hands',    'icon': '💪'},
+    {'label': 'Legs & Feet',     'icon': '🦵'},
+    {'label': 'Mental Health',   'icon': '🧘'},
+    {'label': 'Fever & Flu',     'icon': '🤒'},
+    {'label': 'Other',           'icon': '➕'},
+  ];
 
   @override
   void dispose() { _ctrl.dispose(); super.dispose(); }
@@ -65,19 +80,73 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('AI Medicals'), backgroundColor: const Color(0xFF1565C0), foregroundColor: Colors.white),
-      body: Padding(
+      appBar: AppBar(
+        title: const Text('AI Medicals'),
+        backgroundColor: const Color(0xFF1565C0),
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
+            const Text('What area concerns you?',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _categories.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                childAspectRatio: 2.2,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemBuilder: (ctx, i) {
+                final cat = _categories[i];
+                final selected = _selectedCategory == cat['label'];
+                return GestureDetector(
+                  onTap: () => setState(() => _selectedCategory = cat['label']),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: selected ? const Color(0xFF1565C0) : const Color(0xFFE3F2FD),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: selected ? const Color(0xFF1565C0) : Colors.blue.shade200,
+                      ),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(cat['icon']!, style: const TextStyle(fontSize: 18)),
+                        const SizedBox(height: 2),
+                        Text(
+                          cat['label']!,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: selected ? Colors.white : Colors.blue.shade900,
+                          ),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
             TextField(
               controller: _ctrl,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Describe your symptoms',
-                hintText: 'e.g. headache, fever, sore throat for 2 days',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: _selectedCategory != null
+                    ? 'Describe your $_selectedCategory symptoms'
+                    : 'Describe your symptoms',
+                hintText: 'e.g. sharp pain, how long, severity 1-10',
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
@@ -95,19 +164,15 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            if (_loading) const CircularProgressIndicator(),
+            if (_loading) const Center(child: CircularProgressIndicator()),
             if (_result.isNotEmpty)
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3F2FD),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: SingleChildScrollView(
-                    child: Text(_result, style: const TextStyle(fontSize: 15)),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE3F2FD),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                child: Text(_result, style: const TextStyle(fontSize: 15)),
               ),
           ],
         ),
@@ -116,12 +181,15 @@ class _DiagnoseScreenState extends State<DiagnoseScreen> {
   }
 
   Future<void> _analyze() async {
-    if (_ctrl.text.trim().isEmpty) return;
+    if (_ctrl.text.trim().isEmpty && _selectedCategory == null) return;
     setState(() { _loading = true; _result = ''; });
     await Future.delayed(const Duration(seconds: 2));
     setState(() {
       _loading = false;
-      _result = 'AI analysis coming soon.\n\nYour symptoms: ${_ctrl.text.trim()}\n\nPhase 2 will connect to the Claude API for real diagnosis triage.';
+      _result = 'AI analysis coming soon.\n\n'
+          'Category: ${_selectedCategory ?? "Not selected"}\n'
+          'Symptoms: ${_ctrl.text.trim()}\n\n'
+          'Phase 2 will connect to the Groq API for real diagnosis triage.';
     });
   }
 }
@@ -243,7 +311,6 @@ class _EmergencyCard extends StatelessWidget {
   final String title, number;
   final IconData icon;
   const _EmergencyCard({required this.title, required this.number, required this.icon});
-
   @override
   Widget build(BuildContext context) {
     return Card(
