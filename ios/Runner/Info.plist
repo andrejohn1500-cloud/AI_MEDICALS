@@ -66,5 +66,17 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+
+    <key>NSCameraUsageDescription</key>
+    <string>AI Medicals needs camera access to analyze skin conditions and injuries</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>AI Medicals needs photo library access to upload medical images</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>AI Medicals needs microphone access for video recording</string>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>tel</string>
+        <string>telprompt</string>
+    </array>
 </dict>
 </plist>
